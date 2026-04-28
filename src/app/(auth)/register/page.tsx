@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase/client'
 import { Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
+import { signUpAction } from './actions'
+
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -15,53 +17,24 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   
   const router = useRouter()
-  const supabase = createClient()
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     
     try {
-      // 1. Sign up the user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-            role: role,
-          }
-        }
-      })
+      const result = await signUpAction({ email, password, fullName, role })
 
-      if (authError) {
-        toast.error(authError.message || 'Failed to register')
+      if (result.error) {
+        toast.error(result.error)
         return
       }
 
-      // 2. Insert into public.users
-      if (authData.user) {
-        const { error: dbError } = await supabase
-          .from('users')
-          .insert({
-            id: authData.user.id,
-            email: email,
-            full_name: fullName,
-            role: role
-          })
-
-        if (dbError) {
-            console.error('Failed to create user profile:', dbError)
-            toast.error('Account created, but there was an issue finalizing your profile.')
-        } else {
-            toast.success('Registration successful!')
-            router.push('/dashboard')
-            router.refresh()
-        }
-      }
+      toast.success('Registration successful!')
+      router.push('/dashboard')
+      router.refresh()
     } catch (err: unknown) {
       toast.error('An unexpected error occurred')
-      console.error(err)
     } finally {
       setLoading(false)
     }

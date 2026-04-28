@@ -7,25 +7,23 @@ import { createClient } from '@/lib/supabase/client'
 import { Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
+import { signInAction } from './actions'
+
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      const result = await signInAction({ email, password })
 
-      if (error) {
-        toast.error(error.message || 'Failed to sign in')
+      if (result.error) {
+        toast.error(result.error)
         return
       }
 
@@ -34,7 +32,6 @@ export default function LoginPage() {
       router.refresh()
     } catch (err: unknown) {
       toast.error('An unexpected error occurred')
-      console.error(err);
     } finally {
       setLoading(false)
     }
