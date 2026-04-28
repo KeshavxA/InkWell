@@ -7,12 +7,14 @@ import { format } from 'date-fns';
 import { MessageSquare, Send, Loader2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import ConfirmModal from './ui/ConfirmModal';
 
 export default function CommentsClient({ postId, initialComments }: { postId: string, initialComments: any[] }) {
   const { user, role } = useSupabase();
   const [comments, setComments] = useState<any[]>(initialComments);
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,19 +44,21 @@ export default function CommentsClient({ postId, initialComments }: { postId: st
     }
   };
 
-  const handleDelete = async (commentId: string) => {
-    if (!window.confirm('Are you sure you want to delete this comment?')) return;
+  const handleDeleteConfirm = async () => {
+    if (!commentToDelete) return;
     
     try {
-      const res = await fetch(`/api/comments/${commentId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/comments/${commentToDelete}`, { method: 'DELETE' });
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || 'Failed to delete comment');
       }
-      setComments(comments.filter(c => c.id !== commentId));
+      setComments(comments.filter(c => c.id !== commentToDelete));
       toast.success('Comment deleted');
     } catch (error: any) {
       toast.error(error.message);
+    } finally {
+      setCommentToDelete(null);
     }
   };
 
@@ -124,7 +128,7 @@ export default function CommentsClient({ postId, initialComments }: { postId: st
                   </div>
                   {user && (user.id === comment.author_id || role === 'admin') && (
                     <button
-                      onClick={() => handleDelete(comment.id)}
+                      onClick={() => setCommentToDelete(comment.id)}
                       className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50"
                       title="Delete comment"
                       aria-label="Delete comment"
@@ -141,6 +145,15 @@ export default function CommentsClient({ postId, initialComments }: { postId: st
           <p className="text-gray-500 text-center py-8">No comments yet. Be the first to share your thoughts!</p>
         )}
       </div>
+
+      <ConfirmModal 
+        isOpen={!!commentToDelete}
+        title="Delete Comment"
+        message="Are you sure you want to permanently delete this comment? This action cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setCommentToDelete(null)}
+      />
     </div>
   );
 }

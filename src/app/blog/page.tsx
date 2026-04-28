@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createServerClient } from '@/lib/supabase/server';
-import { format } from 'date-fns';
+import { BookOpen } from 'lucide-react';
 import Link from 'next/link';
-import { ArrowRight, BookOpen, Clock } from 'lucide-react';
 import BlogSearch from '@/components/BlogSearch';
+import PostCard from '@/components/ui/PostCard';
+import Pagination from '@/components/ui/Pagination';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,73 +54,16 @@ export default async function BlogListPage(props: {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
             {posts.map((post: any) => (
-              <Link key={post.id} href={`/blog/${post.id}`} className="group block h-full">
-                <article className="flex flex-col h-full bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden transform hover:-translate-y-1">
-                  <div className="relative h-56 w-full bg-gray-100 overflow-hidden">
-                    {post.featured_image ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img 
-                        src={post.featured_image} 
-                        alt={post.title}
-                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gradient-to-br from-gray-50 to-gray-100">
-                        <BookOpen className="w-12 h-12" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-6 flex flex-col flex-grow">
-                    <div className="flex items-center text-xs text-gray-500 mb-3 space-x-3">
-                      <span className="font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">
-                        {post.users?.full_name || 'Guest'}
-                      </span>
-                      <span className="flex items-center">
-                        <Clock className="w-3 h-3 mr-1" />
-                        {format(new Date(post.created_at), 'MMM d, yyyy')}
-                      </span>
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-indigo-600 transition-colors line-clamp-2">
-                      {post.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm line-clamp-3 mb-4 flex-grow">
-                      {post.summary}
-                    </p>
-                    <div className="mt-auto flex items-center text-indigo-600 font-medium text-sm">
-                      Read story <ArrowRight className="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                </article>
-              </Link>
+              <PostCard key={post.id} post={post} />
             ))}
           </div>
 
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-12">
-              <nav className="inline-flex rounded-md shadow-sm" aria-label="Pagination">
-                <Link
-                  href={`/blog?page=${Math.max(1, page - 1)}${query ? `&query=${query}` : ''}`}
-                  className={`relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
-                    page === 1 ? 'text-gray-300 pointer-events-none' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  Previous
-                </Link>
-                <div className="hidden sm:inline-flex relative items-center px-4 py-2 border-t border-b border-gray-300 bg-white text-sm font-medium text-gray-700">
-                  Page {page} of {totalPages}
-                </div>
-                <Link
-                  href={`/blog?page=${Math.min(totalPages, page + 1)}${query ? `&query=${query}` : ''}`}
-                  className={`relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
-                    page === totalPages ? 'text-gray-300 pointer-events-none' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  Next
-                </Link>
-              </nav>
-            </div>
-          )}
+          <Pagination 
+            page={page} 
+            totalPages={totalPages} 
+            baseUrl="/blog" 
+            query={query} 
+          />
         </>
       ) : (
         <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">

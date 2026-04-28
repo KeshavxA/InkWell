@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { createServerClient } from '@/lib/supabase/server';
 import { format } from 'date-fns';
 import { ArrowRight, BookOpen } from 'lucide-react';
+import PostCard from '@/components/ui/PostCard';
+
 export default async function HomePage() {
   const supabase = createServerClient();
   
@@ -59,40 +61,7 @@ export default async function HomePage() {
         {latestPosts && latestPosts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {latestPosts.map((post: any) => (
-              <Link key={post.id} href={`/blog/${post.id}`} className="group block h-full">
-                <article className="flex flex-col h-full bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden transform hover:-translate-y-1">
-                  <div className="relative h-48 w-full bg-gray-100 overflow-hidden">
-                    {post.featured_image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                      <img 
-                        src={post.featured_image} 
-                        alt={post.title}
-                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50">
-                        <BookOpen className="w-12 h-12" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-6 flex flex-col flex-grow">
-                    <div className="flex items-center text-xs text-gray-500 mb-3 space-x-2">
-                      <span className="font-semibold text-indigo-600">{post.users?.full_name || 'Guest'}</span>
-                      <span>•</span>
-                      <time>{format(new Date(post.created_at), 'MMM d, yyyy')}</time>
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-indigo-600 transition-colors line-clamp-2">
-                      {post.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm line-clamp-3 mb-4 flex-grow">
-                      {post.summary}
-                    </p>
-                    <div className="mt-auto flex items-center text-indigo-600 font-medium text-sm">
-                      Read story <ArrowRight className="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                </article>
-              </Link>
+              <PostCard key={post.id} post={post} />
             ))}
           </div>
         ) : (
