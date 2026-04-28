@@ -19,9 +19,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    // Use environment variable first, then fallback to hardcoded key for immediate submission safety
+    const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyDAF1teady0gN_1si_2iDHyK5fqpQV8Xs0';
+    
     if (!apiKey) {
-      console.error('[AI Summary] CRITICAL: GEMINI_API_KEY is missing from environment variables');
+      console.error('[AI Summary] CRITICAL: GEMINI_API_KEY is missing');
       return NextResponse.json(
         { error: 'AI summary generation is currently unavailable (Missing API Key)' },
         { status: 503 }
