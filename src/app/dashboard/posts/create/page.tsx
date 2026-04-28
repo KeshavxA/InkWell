@@ -16,20 +16,9 @@ export default function CreatePostPage() {
   const [content, setContent] = useState('');
   const [commentsEnabled, setCommentsEnabled] = useState(true);
   
+  const [useAI, setUseAI] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState<string>('');
-
-  useEffect(() => {
-    if (!isLoading) {
-      if (!user) {
-        toast.error('Please log in to create a post');
-        router.push('/login');
-      } else if (role !== 'author' && role !== 'admin') {
-        toast.error('You do not have permission to create posts');
-        router.push('/dashboard');
-      }
-    }
-  }, [user, role, isLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,26 +29,30 @@ export default function CreatePostPage() {
     }
 
     setIsSubmitting(true);
+    let summary = title.slice(0, 150) + '...'; // Default fallback
     
     try {
-      // 1. Generate AI Summary
-      setLoadingStatus('Generating AI summary...');
-      const summaryRes = await fetch('/api/generate-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, body: content }),
-      });
+      // 1. Generate AI Summary (Only if enabled)
+      if (useAI) {
+        setLoadingStatus('Generating AI summary...');
+        try {
+          const summaryRes = await fetch('/api/generate-summary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, body: content }),
+          });
 
-      let summary = '';
-      if (!summaryRes.ok) {
-        const errorData = await summaryRes.json();
-        const errorMsg = errorData.error || 'AI Summary failed';
-        console.warn('AI Summary generation failed:', errorMsg);
-        toast.error(`${errorMsg}. Saving post with fallback text.`, { icon: '🤖' });
-        summary = 'An AI summary could not be generated for this post.';
-      } else {
-        const summaryData = await summaryRes.json();
-        summary = summaryData.summary;
+          if (summaryRes.ok) {
+            const summaryData = await summaryRes.json();
+            summary = summaryData.summary;
+          } else {
+            console.warn('AI Summary failed, using fallback.');
+            toast.error('AI Summary failed. Using title as summary.', { icon: '⚠️' });
+          }
+        } catch (aiErr) {
+          console.error('AI Connection failed:', aiErr);
+          toast.error('Could not connect to AI. Using fallback.', { icon: '⚠️' });
+        }
       }
 
       // 2. Insert into Supabase
@@ -73,7 +66,7 @@ export default function CreatePostPage() {
           content,
           summary,
           author_id: user?.id,
-          comments_enabled: commentsEnabled // Optional: ensures we follow the requirement
+          comments_enabled: commentsEnabled
         }),
       });
 
@@ -82,19 +75,30 @@ export default function CreatePostPage() {
         throw new Error(errorData.error || 'Failed to publish post');
       }
 
-      // 3. Success
       toast.success('Post created successfully!');
       router.push('/dashboard');
       router.refresh();
       
     } catch (err: unknown) {
       console.error(err);
-      toast.error(err instanceof Error ? err.message : 'An unexpected error occurred');
+      toast.error(err instanceof Error ? err.message : 'Database error. Did you run the SQL script?');
     } finally {
       setIsSubmitting(false);
       setLoadingStatus('');
     }
   };
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (!user) {
+        toast.error('Please log in to create a post');
+        router.push('/login');
+      } else if (role !== 'author' && role !== 'admin') {
+        toast.error('You do not have permission to create posts');
+        router.push('/dashboard');
+      }
+    }
+  }, [user, role, isLoading, router]);
 
   if (isLoading || (!user) || (role !== 'author' && role !== 'admin')) {
     return (
@@ -110,6 +114,31 @@ export default function CreatePostPage() {
       
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-8 transition-colors">
+          
+          {/* AI Toggle Section */}
+          <div className="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-500/20">
+            <label className="flex items-center cursor-pointer group">
+              <div className="relative">
+                <input 
+                  type="checkbox" 
+                  className="sr-only" 
+                  checked={useAI}
+                  onChange={() => setUseAI(!useAI)}
+                />
+                <div className={`block w-12 h-7 rounded-full transition-colors ${useAI ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'}`}></div>
+                <div className={`absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform ${useAI ? 'transform translate-x-5' : ''}`}></div>
+              </div>
+              <div className="ml-4">
+                <div className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                  Generate Summary with Gemini AI
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  Automatically create a professional 200-word summary for your post.
+                </div>
+              </div>
+            </label>
+          </div>
+
           <div className="space-y-2.5">
             <label htmlFor="title" className="block text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">
               Post Title
