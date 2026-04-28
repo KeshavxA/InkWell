@@ -41,23 +41,50 @@ export async function POST(req: NextRequest) {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '');
 
-    const { data, error } = await supabaseAdmin
-      .from('posts')
-      .insert({
-        title,
+    // 2. SMART INSERT: Try both schema versions
+    let postData: any = {
+      title,
+      author_id,
+      created_at: new Date().toISOString()
+    };
+
+    // Try Schema A (inkwell_schema.sql)
+    const trySchemaA = async () => {
+      return await supabaseAdmin.from('posts').insert({
+        ...postData,
         body: content,
         image_url: featured_image,
         summary: summary,
-        author_id,
-        created_at: new Date().toISOString()
-      })
-      .select()
-      .single();
+      }).select().single();
+    };
+
+    // Try Schema B (schema.sql)
+    const trySchemaB = async () => {
+      return await supabaseAdmin.from('posts').insert({
+        ...postData,
+        slug,
+        content: content,
+        cover_image: featured_image,
+        excerpt: summary,
+        status: 'published',
+        published_at: new Date().toISOString()
+      }).select().single();
+    };
+
+    let { data, error } = await trySchemaA();
+
+    // If Schema A fails with a "column not found" error, try Schema B
+    if (error && (error.message.includes('column') || error.code === '42703')) {
+      console.log('Schema A failed, trying Schema B...');
+      const resultB = await trySchemaB();
+      data = resultB.data;
+      error = resultB.error;
+    }
 
     if (error) {
-      console.error('Supabase insertion error:', error);
+      console.error('Final Supabase insertion error:', error);
       return NextResponse.json(
-        { error: error.message || 'Failed to create post' },
+        { error: `Database Error: ${error.message}` },
         { status: 500 }
       );
     }
