@@ -37,16 +37,10 @@ export async function POST(req: NextRequest) {
     
     console.log('[AI Summary] Cleaned content length:', cleanContent.length);
 
-    if (cleanContent.length < 50) {
-      return NextResponse.json(
-        { error: 'Content is too short to generate a meaningful summary. Please write at least 50 characters.' },
-        { status: 400 }
-      );
-    }
-
     const prompt = `You are a professional blog post summarizer. 
-Read the following blog post titled "${title}" and generate a concise, engaging summary of about 150-200 words.
-Focus on the key takeaways and why someone should read the full post.
+Read the following blog post titled "${title}" and generate an engaging summary of approximately 200 words.
+Focus on the key takeaways and why someone should read the full post. 
+If the content is very short, expand on the theme mentioned to reach the desired length.
 Return ONLY the summary text.
 
 POST CONTENT:
