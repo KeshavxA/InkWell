@@ -40,15 +40,10 @@ export default function SupabaseProvider({
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Fetch user role if user exists
+        // Read role from user metadata (stored during signup)
         if (session?.user) {
-          const { data } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', session.user.id)
-            .single();
-            
-          setRole(data?.role ?? 'user');
+          const userRole = session.user.user_metadata?.role || 'viewer';
+          setRole(userRole);
         }
       } catch (error) {
         console.error('Error fetching session:', error);
@@ -65,12 +60,8 @@ export default function SupabaseProvider({
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-        setRole(data?.role ?? 'user');
+        const userRole = session.user.user_metadata?.role || 'viewer';
+        setRole(userRole);
       } else {
         setRole(null);
       }
