@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       console.log('Profile missing for author, creating one...');
       await supabaseAdmin.from('profiles').insert({
         id: author_id,
-        username: email ? email.split('@')[0] : `user_${author_id.slice(0, 5)}`,
+        username: `author_${author_id.slice(0, 5)}`,
         full_name: 'Author'
       });
     }
