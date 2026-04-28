@@ -51,22 +51,27 @@ ${cleanContent}`;
     const response = await result.response;
     const summary = response.text();
 
-    console.log('[AI Summary] Successfully generated summary of length:', summary.length);
+    if (!summary) {
+      throw new Error('Gemini returned an empty response');
+    }
+
+    console.log('[AI Summary] Successfully generated summary');
 
     return NextResponse.json({ summary });
   } catch (error: any) {
-    console.error('[AI Summary] Error caught:', error.message || error);
+    console.error('[AI Summary] Full Error:', error);
     
-    // Check for specific API errors
+    let userErrorMessage = 'AI Service Error';
     if (error.message?.includes('API key not valid')) {
-      return NextResponse.json(
-        { error: 'The AI API key is invalid. Please check your configuration.' },
-        { status: 401 }
-      );
+      userErrorMessage = 'Invalid AI API Key';
+    } else if (error.message?.includes('safety')) {
+      userErrorMessage = 'Content flagged by AI safety filters';
+    } else if (error.message?.includes('fetch failed')) {
+      userErrorMessage = 'Could not connect to AI service (Network error)';
     }
 
     return NextResponse.json(
-      { error: 'Failed to generate summary. The AI service might be busy or the content is problematic.' },
+      { error: `AI Error: ${userErrorMessage}. Please check your Vercel GEMINI_API_KEY.` },
       { status: 500 }
     );
   }
