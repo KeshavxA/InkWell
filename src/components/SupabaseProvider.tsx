@@ -43,7 +43,7 @@ export default function SupabaseProvider({
         // Fetch user role if user exists
         if (session?.user) {
           const { data } = await supabase
-            .from('users')
+            .from('profiles')
             .select('role')
             .eq('id', session.user.id)
             .single();
@@ -66,7 +66,7 @@ export default function SupabaseProvider({
       setUser(session?.user ?? null);
       if (session?.user) {
         const { data } = await supabase
-          .from('users')
+          .from('profiles')
           .select('role')
           .eq('id', session.user.id)
           .single();
