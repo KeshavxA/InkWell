@@ -1,31 +1,52 @@
 # InkWell — AI-Powered Blogging Platform
 
-![InkWell Cover](/public/preview.png) <!-- Add preview image here later -->
+![InkWell Cover](/public/preview.png)
 
 ## 🚀 Live Demo
-[Live Site URL goes here]
+**[https://ink-well-orpin.vercel.app](https://ink-well-orpin.vercel.app)**
 
 ## 📋 Project Overview
-InkWell is a fully-featured, premium blogging platform that leverages the power of Artificial Intelligence to streamline content creation and discovery. Built utilizing a modern Next.js 14 architecture with a Supabase PostgreSQL backbone, the platform enforces strict user access controls while supporting authors natively with automated Gemini LLM text summarizations optimizing reader retention.
+InkWell is a fully-featured, premium blogging platform that leverages the power of Artificial Intelligence to streamline content creation and discovery. Built utilizing a modern Next.js 16 architecture with a Supabase PostgreSQL backbone, the platform enforces strict user access controls while supporting authors natively with automated Gemini LLM text summarizations optimizing reader retention.
 
 ## 🛠 Tech Stack
 | Layer | Technology |
 | --- | --- |
-| **Framework** | Next.js 14 (App Router) |
+| **Framework** | Next.js 16 (App Router / Turbopack) |
 | **Language** | TypeScript |
-| **Styling** | Tailwind CSS |
+| **Styling** | Vanilla CSS (Fintech Aesthetics) |
 | **Database** | PostgreSQL (Supabase) |
-| **Authentication** | Supabase Auth |
+| **Authentication** | Supabase SSR |
 | **AI Integration** | Google Gemini (1.5 Flash Model) |
 | **Components** | Lucide React |
 
 ## ✨ Features
-- **Role-based Access**: Custom claims isolating `Author`, `Viewer`, and `Admin` rights.
-- **AI-generated Post Summaries**: Automated AI digest generation natively integrated with Google Gemini using explicit generation confirmation.
-- **Full CRUD for Blog Posts**: Robust creation, dynamic reading, updating, and protected remote un-publishing.
-- **Interactive Comment System**: Authenticated cross-population communication directly mapped to readers.
-- **Search and Pagination**: High-performance URL-based querying and chunked dynamic routing boundaries for seamless UI traversal.
-- **Admin Dashboard**: Consolidated master view monitoring comprehensive user logs, granular post deletion, and native comment filtering tools.
+- **AI-generated Post Summaries**: Automated AI digest generation natively integrated with Google Gemini.
+- **Role-based Access**: Custom roles isolating `Viewer`, `Author`, and `Admin` rights.
+- **Tiptap Rich Text Editor**: Modern, extensible editor for professional content creation.
+- **Interactive Comment System**: Authenticated real-time communication on every post.
+- **Admin Dashboard**: Master view for monitoring users, managing posts, and filtering comments.
+- **Premium Design**: Sleek dark mode, glassmorphism, and responsive layouts.
+
+## 📝 How to Use
+
+### 1. Registration & Login
+- Click the **"Get Started"** or **"Login"** button in the top navigation.
+- To create an account, click **"Don't have an account? Sign up"**.
+- Enter your email, full name, and password.
+- After signing up, you will be automatically logged in and assigned the **Viewer** role.
+
+### 2. Becoming an Author
+- To write posts, you need the **Author** role.
+- Currently, you can join as an author by clicking **"Become an Author"** on the landing page or by asking an **Admin** to upgrade your role.
+- Once you have author rights, a **"Dashboard"** link will appear in your profile menu.
+
+### 3. Writing with AI
+- Inside the Dashboard, click **"Create New Post"**.
+- Write your story using the Tiptap editor.
+- Click **"Generate AI Summary"** to let Google Gemini read your post and create a concise digest automatically.
+- Hit **"Publish Post"** to make it live!
+
+---
 
 ## 🗄 Database Schema
 
@@ -34,9 +55,7 @@ InkWell is a fully-featured, premium blogging platform that leverages the power 
 | --- | --- | --- |
 | `id` | uuid | Primary Key, references auth.users |
 | `full_name` | text | User's display name |
-| `email` | text | Registered email |
 | `role` | text | 'viewer', 'author', or 'admin' |
-| `created_at` | timestamp | Registration date |
 
 **`posts` Table**
 | Field | Type | Description |
@@ -45,18 +64,10 @@ InkWell is a fully-featured, premium blogging platform that leverages the power 
 | `title` | text | Title of the blog post |
 | `summary` | text | AI-generated summary |
 | `content` | text | HTML payload of the complete post |
-| `featured_image` | text | Standard URL mapped image cover |
+| `featured_image` | text | URL for the post cover image |
 | `author_id` | uuid | Foreign Key referencing users(id) |
-| `created_at` | timestamp | Publication date |
 
-**`comments` Table**
-| Field | Type | Description |
-| --- | --- | --- |
-| `id` | uuid | Primary Key |
-| `post_id` | uuid | Foreign Key referencing posts(id) |
-| `author_id` | uuid | Foreign Key referencing users(id) |
-| `content` | text | The content of the user comment |
-| `created_at` | timestamp | Posting date |
+---
 
 ## ⚙️ Local Setup Instructions
 
@@ -72,43 +83,28 @@ InkWell is a fully-featured, premium blogging platform that leverages the power 
    ```
 
 3. **Configure Environment Variables**
-   Rename `.env.example` to `.env.local` and populate these values:
+   Rename `.env.example` to `.env.local`:
    ```bash
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-   GEMINI_API_KEY=your_google_gemini_api_key
+   NEXT_PUBLIC_SUPABASE_URL=your_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_service_key
+   GEMINI_API_KEY=your_gemini_key
    ```
 
-4. **Prepare Supabase Backend Tables**
-   Run the generated schema SQL scripts from inside your Supabase project's native SQL editor. This establishes the tables along with RLS (Row Level Security) definitions binding native Next.js handlers.
-
-5. **Run the local development server**
+4. **Run development server**
    ```bash
    npm run dev
    ```
-   *InkWell should now be running on `http://localhost:3000`*
-
-## 🌐 Deployment Steps (Vercel)
-
-1. Create a [Vercel](https://vercel.com/) account and connect it securely to your GitHub profile.
-2. Select **"Add New Project"** and import the `InkWell` repository.
-3. The integrated Vercel build systems will automatically recognize Next.js configs. 
-4. Under the **"Environment Variables"** tab within the deployment dashboard, meticulously copy the four identical keys documented from your local `.env.local` configuration.
-5. Click **"Deploy"**.
-6. Retrieve your newly generated Vercel domain, and assign it to the `NEXT_PUBLIC_APP_URL` variable inside the Vercel variables dashboard and trigger a redeploy for native absolute URI links.
-7. Within your Supabase Dashboard -> Authentication -> URL Configuration, append your new Vercel domain to the `Site URL` and `Redirect URLs` to secure session bridging on the remote server.
 
 ## 🤖 AI Tool Used
-The bulk of InkWell's logic and architecture was built dynamically utilizing **Antigravity**, a high-performance agentic coding assistant engine by Google DeepMind. Antigravity operated as an active pair programmer navigating the user's local filesystem context executing real-time iterative coding workflows to handle complex integrations encompassing native API endpoints, database RLS design implementations, and UI/UX element alignments.
+The bulk of InkWell's logic and architecture was built dynamically utilizing **Antigravity**, a high-performance agentic coding assistant engine by Google DeepMind. Antigravity operated as an active pair programmer navigating the user's local filesystem context executing real-time iterative coding workflows to handle complex integrations.
 
 ## 💡 Key Technical Decisions
-- **Cost-Optimized AI Inference Strategy**: Summaries are generated strictly precisely *once* at standard post creation. They are immediately materialized natively onto the Postgres database completely avoiding redundant LLM API hits protecting server cost limits.
-- **Server Components Paradigm**: Hardened critical boundaries utilizing bleeding-edge React Server Components drastically improving the SEO visibility mapping mechanisms associated with large text payloads delivered dynamically for public readers.
-- **RLS Boundary Validations**: Implemented multi-layer role validations ensuring comprehensive defense against spoofing via strict Supabase backend queries enforcing user constraints.
+- **Cost-Optimized AI Inference**: Summaries are generated once and stored in the database to avoid redundant API costs.
+- **Supabase SSR Clients**: Implemented the latest Supabase SSR patterns for secure, server-side authentication handling.
+- **Fintech Aesthetic**: Used a custom design system with `Slate-900` backgrounds and bold typography for a premium look.
 
-## 🐛 Known Issues / Future Improvements
-- Implement a paginated infinite-scroll capability for the native comment rendering lists.
-- Transition `featured_image` to a native Supabase Storage buckets implementation from strict URL injections.
-- Finalize mobile UI alignment optimization for deeply nested comment chains.
+## ⚖️ License
+MIT License - Copyright (c) 2026 KeshavxA
+
  
