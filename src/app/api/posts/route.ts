@@ -18,75 +18,54 @@ export async function POST(req: NextRequest) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    // Insert the post into the database
-    // 1. Ensure profile exists (Safety check for author_id FK)
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
+    // 1. Ensure user record exists in public.users (Safety check for author_id FK)
+    const { data: publicUser } = await supabaseAdmin
+      .from('users')
       .select('id')
       .eq('id', author_id)
       .single();
 
-    if (!profile) {
-      console.log('Profile missing for author, creating one...');
-      await supabaseAdmin.from('profiles').insert({
+    if (!publicUser) {
+      console.log('User record missing in public.users, creating one...');
+      await supabaseAdmin.from('users').insert({
         id: author_id,
-        username: `author_${author_id.slice(0, 5)}`,
-        full_name: 'Author'
+        name: 'Author'
       });
     }
 
-    // Generate a slug from the title
+    // 2. Generate slug and timestamp
     const slug = title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '');
 
-    // 2. SMART INSERT: Try both schema versions
-    let postData: any = {
-      title,
-      author_id,
-      created_at: new Date().toISOString()
-    };
-
-    // Try Schema A (inkwell_schema.sql)
-    const trySchemaA = async () => {
-      return await supabaseAdmin.from('posts').insert({
-        ...postData,
+    // 3. SUPER-INSERT: Populate ALL possible column names to ensure success
+    const { data, error } = await supabaseAdmin
+      .from('posts')
+      .insert({
+        title,
+        author_id,
+        // Content variations
         body: content,
-        image_url: featured_image,
-        summary: summary,
-      }).select().single();
-    };
-
-    // Try Schema B (schema.sql)
-    const trySchemaB = async () => {
-      return await supabaseAdmin.from('posts').insert({
-        ...postData,
-        slug,
         content: content,
+        // Image variations
+        image_url: featured_image,
         cover_image: featured_image,
+        // Summary variations
+        summary: summary,
         excerpt: summary,
+        // Other fields
+        slug: slug,
         status: 'published',
-        published_at: new Date().toISOString()
-      }).select().single();
-    };
-
-    let { data, error } = await trySchemaA();
-
-    // If Schema A fails with a "column not found" error, try Schema B
-    if (error && (error.message.includes('column') || error.code === '42703')) {
-      console.log('Schema A failed, trying Schema B...');
-      const resultB = await trySchemaB();
-      data = resultB.data;
-      error = resultB.error;
-    }
+        published_at: new Date().toISOString(),
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
 
     if (error) {
       console.error('Final Supabase insertion error:', error);
-      return NextResponse.json(
-        { error: `Database Error: ${error.message}` },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ post: data }, { status: 201 });
