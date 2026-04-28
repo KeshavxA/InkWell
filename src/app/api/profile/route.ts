@@ -1,12 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
 export async function PATCH(req: NextRequest) {
   try {
@@ -23,6 +18,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
 
+    const supabaseAdmin = getSupabaseAdmin();
     // Use admin client in case standard users lack RLS update rules on public.users
     const { data, error } = await supabaseAdmin
       .from('users')

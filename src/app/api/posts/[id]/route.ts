@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
-import { createClient } from '@supabase/supabase-js';
-
-// Elevate privileges to bypass RLS for modifications
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
 // Helper for auth validation
 async function getUserAccess() {
@@ -31,6 +25,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     const { user, role } = await getUserAccess();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    const supabaseAdmin = getSupabaseAdmin();
     const { data: post, error } = await supabaseAdmin
       .from('posts')
       .select('*')
@@ -60,6 +55,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     const { user, role } = await getUserAccess();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    const supabaseAdmin = getSupabaseAdmin();
     // Validate ownership before update
     const { data: existingPost } = await supabaseAdmin
       .from('posts')
@@ -103,6 +99,7 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
     const { user, role } = await getUserAccess();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    const supabaseAdmin = getSupabaseAdmin();
     // Validate ownership before delete
     const { data: existingPost } = await supabaseAdmin
       .from('posts')

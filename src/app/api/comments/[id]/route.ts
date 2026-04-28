@@ -1,12 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
 async function getUserAccess() {
   const supabase = await createServerClient();
@@ -30,6 +25,7 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
     const { user, role } = await getUserAccess();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    const supabaseAdmin = getSupabaseAdmin();
     // Validate ownership before delete
     const { data: existingComment } = await supabaseAdmin
       .from('comments')
