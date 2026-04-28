@@ -4,12 +4,12 @@
 import { useState } from 'react';
 import { useSupabase } from './SupabaseProvider';
 import { format } from 'date-fns';
-import { MessageSquare, Send, Loader2 } from 'lucide-react';
+import { MessageSquare, Send, Loader2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
 export default function CommentsClient({ postId, initialComments }: { postId: string, initialComments: any[] }) {
-  const { user } = useSupabase();
+  const { user, role } = useSupabase();
   const [comments, setComments] = useState<any[]>(initialComments);
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,7 +23,7 @@ export default function CommentsClient({ postId, initialComments }: { postId: st
       const res = await fetch('/api/comments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ post_id: postId, content: content.trim() })
+        body: JSON.stringify({ post_id: postId, comment_text: content.trim() })
       });
 
       if (!res.ok) {
@@ -39,6 +39,22 @@ export default function CommentsClient({ postId, initialComments }: { postId: st
       toast.error(error.message);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (commentId: string) => {
+    if (!window.confirm('Are you sure you want to delete this comment?')) return;
+    
+    try {
+      const res = await fetch(`/api/comments/${commentId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to delete comment');
+      }
+      setComments(comments.filter(c => c.id !== commentId));
+      toast.success('Comment deleted');
+    } catch (error: any) {
+      toast.error(error.message);
     }
   };
 
@@ -98,12 +114,24 @@ export default function CommentsClient({ postId, initialComments }: { postId: st
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
-                  <h3 className="text-sm font-bold text-gray-900">
-                    {comment.users?.full_name || 'Guest User'}
-                  </h3>
-                  <span className="text-xs text-gray-500">
-                    {format(new Date(comment.created_at), 'MMM d, yyyy • h:mm a')}
-                  </span>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900 inline-block mr-2">
+                      {comment.users?.full_name || 'Guest User'}
+                    </h3>
+                    <span className="text-xs text-gray-500">
+                      {format(new Date(comment.created_at), 'MMM d, yyyy • h:mm a')}
+                    </span>
+                  </div>
+                  {user && (user.id === comment.author_id || role === 'admin') && (
+                    <button
+                      onClick={() => handleDelete(comment.id)}
+                      className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50"
+                      title="Delete comment"
+                      aria-label="Delete comment"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
                 <p className="text-gray-700 text-sm whitespace-pre-wrap">{comment.content}</p>
               </div>

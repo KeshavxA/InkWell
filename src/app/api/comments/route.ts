@@ -11,9 +11,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { post_id, content } = await req.json();
+    const { post_id, content, comment_text } = await req.json();
+    const finalContent = content || comment_text;
 
-    if (!post_id || !content) {
+    if (!post_id || !finalContent) {
       return NextResponse.json({ error: 'Post ID and content are required' }, { status: 400 });
     }
 
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
       .insert([
         {
           post_id,
-          content,
+          content: finalContent,
           author_id: session.user.id
         }
       ])
