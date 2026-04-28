@@ -56,7 +56,9 @@ export default function DashboardHomePage() {
               Welcome back, {user.user_metadata?.full_name || user.email?.split('@')[0]}!
             </h1>
             <p className="text-gray-500 mt-2">
-              Here is what is happening with your InkWell account today.
+              {role === 'admin' 
+                ? "You have full control over the platform's content and users." 
+                : "Here is what is happening with your InkWell account today."}
             </p>
           </div>
           <div className="hidden sm:block">
@@ -120,14 +122,16 @@ export default function DashboardHomePage() {
         </Link>
         
         <Link 
-          href="/dashboard/posts"
+          href={role === 'admin' ? "/dashboard/posts" : "/dashboard/posts"}
           className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md hover:border-indigo-300 transition-all group"
         >
           <div className="flex items-center">
             <div className="bg-gray-50 p-2 rounded-full text-gray-600 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
               <FileText className="h-5 w-5" />
             </div>
-            <span className="ml-3 font-medium text-gray-900">View My Posts</span>
+            <span className="ml-3 font-medium text-gray-900">
+              {role === 'admin' ? 'Manage All Posts' : 'View My Posts'}
+            </span>
           </div>
           <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-indigo-600 transition-colors" />
         </Link>

@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Initialize the Gemini API client
-// Assumes GEMINI_API_KEY is set in the environment variables
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+// Initialize the Gemini API client inside the request handler to ensure environment variables are loaded.
 
 export async function POST(req: NextRequest) {
   try {
-    // TODO: Implement rate limiting here (e.g., using Upstash Redis or standard memory limits)
-    // to prevent abuse of the API route.
-
     const body = await req.json();
     const { title, body: contentBody } = body;
+
+    console.log('[AI Summary] Request received for title:', title);
 
     if (!title || !contentBody) {
       return NextResponse.json(
@@ -20,36 +17,60 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!process.env.GEMINI_API_KEY) {
-      console.error('GEMINI_API_KEY is missing');
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.error('[AI Summary] CRITICAL: GEMINI_API_KEY is missing from environment variables');
       return NextResponse.json(
-        { error: 'AI summary generation is currently unavailable' },
+        { error: 'AI summary generation is currently unavailable (Missing API Key)' },
         { status: 503 }
       );
     }
 
-    // COST OPTIMIZATION NOTES:
-    // 1. Summary is generated ONCE at post creation.
-    // 2. The result should be stored in the DB to avoid repeated API calls.
-    // 3. Never regenerate unless explicitly requested by the user.
-
+    // Initialize inside handler to ensure fresh env vars
+    const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-    const prompt = `You are a blog summarizer. Read the following blog post titled '${title}' 
-and generate a concise, engaging summary of approximately 200 words that 
-captures the main points. Return only the summary text, nothing else.
+    // Strip HTML tags from contentBody to send clean text to Gemini
+    const cleanContent = contentBody.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+    
+    console.log('[AI Summary] Cleaned content length:', cleanContent.length);
 
-Blog content: ${contentBody}`;
+    if (cleanContent.length < 50) {
+      return NextResponse.json(
+        { error: 'Content is too short to generate a meaningful summary. Please write at least 50 characters.' },
+        { status: 400 }
+      );
+    }
 
+    const prompt = `You are a professional blog post summarizer. 
+Read the following blog post titled "${title}" and generate a concise, engaging summary of about 150-200 words.
+Focus on the key takeaways and why someone should read the full post.
+Return ONLY the summary text.
+
+POST CONTENT:
+${cleanContent}`;
+
+    console.log('[AI Summary] Calling Gemini API...');
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const summary = response.text();
 
+    console.log('[AI Summary] Successfully generated summary of length:', summary.length);
+
     return NextResponse.json({ summary });
-  } catch (error) {
-    console.error('Error generating summary:', error);
+  } catch (error: any) {
+    console.error('[AI Summary] Error caught:', error.message || error);
+    
+    // Check for specific API errors
+    if (error.message?.includes('API key not valid')) {
+      return NextResponse.json(
+        { error: 'The AI API key is invalid. Please check your configuration.' },
+        { status: 401 }
+      );
+    }
+
     return NextResponse.json(
-      { error: 'Failed to generate summary' },
+      { error: 'Failed to generate summary. The AI service might be busy or the content is problematic.' },
       { status: 500 }
     );
   }

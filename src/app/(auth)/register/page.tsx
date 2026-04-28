@@ -11,7 +11,7 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState<'viewer' | 'author'>('viewer')
+  const [role, setRole] = useState<'viewer' | 'author' | 'admin'>('viewer')
   const [loading, setLoading] = useState(false)
   
   const router = useRouter()
@@ -128,11 +128,12 @@ export default function RegisterPage() {
           <select
             id="role"
             value={role}
-            onChange={(e) => setRole(e.target.value as 'viewer' | 'author')}
+            onChange={(e) => setRole(e.target.value as 'viewer' | 'author' | 'admin')}
             className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 text-white transition-colors appearance-none"
           >
             <option value="viewer">Viewer (Read Only)</option>
             <option value="author">Author (Create Posts)</option>
+            <option value="admin">Admin (Full Access)</option>
           </select>
         </div>
 

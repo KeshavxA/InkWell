@@ -10,7 +10,7 @@ const supabaseAdmin = createClient(
 
 export async function PATCH(req: NextRequest) {
   try {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session?.user) {

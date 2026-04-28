@@ -3,13 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSupabase } from '@/components/SupabaseProvider';
-import { Loader2, Image as ImageIcon } from 'lucide-react';
+import TiptapEditor from '@/components/ui/TiptapEditor';
+import { Loader2, Image as ImageIcon, MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
-import dynamic from 'next/dynamic';
-import 'react-quill/dist/quill.snow.css';
-
-// Dynamically import ReactQuill to prevent SSR issues
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 export default function CreatePostPage() {
   const { user, role, isLoading } = useSupabase();
@@ -18,6 +14,7 @@ export default function CreatePostPage() {
   const [title, setTitle] = useState('');
   const [featuredImage, setFeaturedImage] = useState('');
   const [content, setContent] = useState('');
+  const [commentsEnabled, setCommentsEnabled] = useState(true);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState<string>('');
@@ -37,7 +34,7 @@ export default function CreatePostPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title || !content || content === '<p><br></p>') {
+    if (!title || !content || content === '' || content === '<p></p>') {
       toast.error('Title and content are required');
       return;
     }
@@ -53,12 +50,17 @@ export default function CreatePostPage() {
         body: JSON.stringify({ title, body: content }),
       });
 
+      let summary = '';
       if (!summaryRes.ok) {
         const errorData = await summaryRes.json();
-        throw new Error(errorData.error || 'Failed to generate summary');
+        const errorMsg = errorData.error || 'AI Summary failed';
+        console.warn('AI Summary generation failed:', errorMsg);
+        toast.error(`${errorMsg}. Saving post with fallback text.`);
+        summary = 'An AI summary could not be generated for this post.';
+      } else {
+        const summaryData = await summaryRes.json();
+        summary = summaryData.summary;
       }
-
-      const { summary } = await summaryRes.json();
 
       // 2. Insert into Supabase
       setLoadingStatus('Publishing post...');
@@ -71,6 +73,7 @@ export default function CreatePostPage() {
           content,
           summary,
           author_id: user?.id,
+          comments_enabled: commentsEnabled // Optional: ensures we follow the requirement
         }),
       });
 
@@ -93,7 +96,6 @@ export default function CreatePostPage() {
     }
   };
 
-  // Prevent flashing content while checking authorization
   if (isLoading || (!user) || (role !== 'author' && role !== 'admin')) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -103,74 +105,83 @@ export default function CreatePostPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Create New Post</h1>
+    <div className="max-w-4xl mx-auto py-8 px-4">
+      <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-8 tracking-tight">Create New Post</h1>
       
-      <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <div className="space-y-2">
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-            Post Title
-          </label>
-          <input
-            id="title"
-            type="text"
-            required
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="A catchy title for your amazing post"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="featuredImage" className="block text-sm font-medium text-gray-700">
-            Featured Image URL
-          </label>
-          <div className="flex space-x-3">
+      <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-8 transition-colors">
+          <div className="space-y-2.5">
+            <label htmlFor="title" className="block text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">
+              Post Title
+            </label>
             <input
-              id="featuredImage"
-              type="url"
-              value={featuredImage}
-              onChange={(e) => setFeaturedImage(e.target.value)}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="https://example.com/image.jpg"
+              id="title"
+              type="text"
+              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full px-5 py-4 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 bg-white dark:bg-slate-950 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 transition-all outline-none text-lg font-medium"
+              placeholder="A catchy title for your amazing post"
             />
           </div>
-          {featuredImage ? (
-            <div className="mt-4 relative h-48 w-full max-w-sm rounded-md overflow-hidden bg-gray-100 border border-gray-200">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={featuredImage} alt="Featured preview" className="object-cover w-full h-full" />
-            </div>
-          ) : (
-            <div className="mt-4 h-48 w-full max-w-sm rounded-md border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 text-gray-400">
-              <div className="text-center flex flex-col items-center">
-                <ImageIcon className="mx-auto h-12 w-12 text-gray-300" />
-                <span className="mt-2 block text-sm font-medium">Image Preview</span>
+
+          <div className="space-y-2.5">
+            <label htmlFor="featuredImage" className="block text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">
+              Featured Image URL
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <ImageIcon className="h-5 w-5 text-slate-400" />
               </div>
+              <input
+                id="featuredImage"
+                type="url"
+                value={featuredImage}
+                onChange={(e) => setFeaturedImage(e.target.value)}
+                className="w-full pl-12 pr-5 py-4 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 bg-white dark:bg-slate-950 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 transition-all outline-none"
+                placeholder="https://images.unsplash.com/photo-..."
+              />
             </div>
-          )}
-        </div>
+            {featuredImage && (
+              <div className="mt-4 relative h-64 w-full rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800">
+                <img src={featuredImage} alt="Featured preview" className="object-cover w-full h-full" />
+              </div>
+            )}
+          </div>
 
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
-            Content
-          </label>
-          <div className="bg-white border rounded-md">
-            <ReactQuill
-              theme="snow"
-              value={content}
-              onChange={setContent}
-              className="h-64 mb-12"
-              placeholder="Write your story here..."
-            />
+          <div className="space-y-2.5">
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">
+              Post Content
+            </label>
+            <TiptapEditor content={content} onChange={setContent} />
+          </div>
+
+          <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
+            <label className="flex items-center cursor-pointer group">
+              <div className="relative">
+                <input 
+                  type="checkbox" 
+                  className="sr-only" 
+                  checked={commentsEnabled}
+                  onChange={() => setCommentsEnabled(!commentsEnabled)}
+                />
+                <div className={`block w-12 h-7 rounded-full transition-colors ${commentsEnabled ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'}`}></div>
+                <div className={`absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform ${commentsEnabled ? 'transform translate-x-5' : ''}`}></div>
+              </div>
+              <div className="ml-4 text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+                Enable Comments Section
+              </div>
+              <MessageSquare className="ml-2 w-4 h-4 text-slate-400" />
+            </label>
+            <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 ml-16">Allow readers to share their thoughts and engage with your story.</p>
           </div>
         </div>
 
-        <div className="pt-4 flex justify-end">
+        <div className="flex justify-end pt-4">
           <button
             type="submit"
             disabled={isSubmitting}
-            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center px-8 py-3.5 border border-transparent text-base font-bold rounded-full shadow-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:-translate-y-0.5 active:translate-y-0"
           >
             {isSubmitting ? (
               <>
@@ -186,3 +197,4 @@ export default function CreatePostPage() {
     </div>
   );
 }
+

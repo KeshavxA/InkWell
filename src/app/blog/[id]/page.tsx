@@ -13,7 +13,7 @@ export default async function SinglePostPage(props: {
   
   if (!id) notFound();
 
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   // Fetch the post
   const { data: post, error } = await supabase
@@ -49,18 +49,18 @@ export default async function SinglePostPage(props: {
 
       {/* Header */}
       <header className="mb-10 text-center">
-        <h1 className="text-4xl sm:text-5xl font-black text-gray-900 tracking-tight mb-6">
+        <h1 className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight mb-6">
           {post.title}
         </h1>
         
-        <div className="flex items-center justify-center space-x-6 text-gray-500">
+        <div className="flex items-center justify-center space-x-6 text-slate-500 dark:text-slate-400">
           <div className="flex items-center">
-            <User className="w-5 h-5 mr-2 text-indigo-500" />
-            <span className="font-medium text-gray-900">{post.users?.full_name || 'Guest'}</span>
+            <User className="w-5 h-5 mr-2 text-indigo-500 dark:text-indigo-400" />
+            <span className="font-medium text-slate-900 dark:text-slate-200">{post.users?.full_name || 'Guest'}</span>
           </div>
           <div className="flex items-center">
-            <Calendar className="w-5 h-5 mr-2 text-indigo-500" />
-            <time dateTime={post.created_at}>
+            <Calendar className="w-5 h-5 mr-2 text-indigo-500 dark:text-indigo-400" />
+            <time dateTime={post.created_at} className="font-medium">
               {format(new Date(post.created_at), 'MMMM d, yyyy')}
             </time>
           </div>
@@ -81,13 +81,13 @@ export default async function SinglePostPage(props: {
 
       {/* AI Summary Highlight Card */}
       {post.summary && (
-        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-8 rounded-3xl mb-12 border border-indigo-100 shadow-sm relative overflow-hidden">
+        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20 p-8 rounded-3xl mb-12 border border-indigo-100 dark:border-indigo-900/50 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-indigo-500 to-purple-500"></div>
-          <div className="flex items-center text-indigo-700 font-bold mb-4">
+          <div className="flex items-center text-indigo-700 dark:text-indigo-400 font-bold mb-4">
             <Sparkles className="w-5 h-5 mr-2" />
             <span>AI Summary</span>
           </div>
-          <p className="text-indigo-900 leading-relaxed text-lg">
+          <p className="text-indigo-900 dark:text-indigo-100 leading-relaxed text-lg">
             {post.summary}
           </p>
         </div>
@@ -95,7 +95,7 @@ export default async function SinglePostPage(props: {
 
       {/* Body Content */}
       <div 
-        className="prose prose-lg prose-indigo max-w-none text-gray-800"
+        className="prose prose-lg prose-indigo dark:prose-invert max-w-none text-slate-800 dark:text-slate-300"
         dangerouslySetInnerHTML={{ __html: post.content }}
       />
 

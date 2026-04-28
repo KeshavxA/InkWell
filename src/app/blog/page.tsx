@@ -16,7 +16,7 @@ export default async function BlogListPage(props: {
   const page = Number(searchParams?.page) || 1;
   const POSTS_PER_PAGE = 6;
   
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   
   let supabaseQuery = supabase
     .from('posts')
@@ -41,10 +41,10 @@ export default async function BlogListPage(props: {
   return (
     <div className="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <div className="text-center mb-16">
-        <h1 className="text-4xl lg:text-5xl font-black text-gray-900 tracking-tight mb-4">
+        <h1 className="text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight mb-4">
           The <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">InkWell</span> Blog
         </h1>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
+        <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-8">
           Explore our collection of articles, insights, and stories from thought leaders and creatives.
         </p>
         <BlogSearch />
@@ -66,10 +66,10 @@ export default async function BlogListPage(props: {
           />
         </>
       ) : (
-        <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
-          <BookOpen className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-          <h3 className="text-xl font-medium text-gray-900 mb-2">No posts found</h3>
-          <p className="text-gray-500">
+        <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
+          <BookOpen className="mx-auto h-12 w-12 text-slate-200 dark:text-slate-800 mb-4" />
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No posts found</h3>
+          <p className="text-slate-500 dark:text-slate-400">
             {query ? `We couldn't find any posts matching "${query}".` : 'Our library is currently empty. Check back soon!'}
           </p>
           {query && (

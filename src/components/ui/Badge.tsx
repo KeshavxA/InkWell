@@ -7,9 +7,9 @@ export default function Badge({ role }: { role: string | null | undefined }) {
   return (
     <div className={clsx(
       "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
-      safeRole === 'admin' ? "bg-red-100 text-red-800" :
-      safeRole === 'author' ? "bg-blue-100 text-blue-800" :
-      "bg-gray-100 text-gray-800"
+      safeRole === 'admin' ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300" :
+      safeRole === 'author' ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300" :
+      "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300"
     )}>
       <ShieldCheck className="w-3.5 h-3.5 mr-1" />
       {safeRole.toUpperCase()}

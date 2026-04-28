@@ -10,7 +10,7 @@ const supabaseAdmin = createClient(
 
 // Helper to verify the caller is actually an admin
 async function verifyAdmin() {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const { data: { session } } = await supabase.auth.getSession();
   
   if (!session?.user) return false;
