@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
-// Create a Supabase client with the service role key for admin privileges
-// Required environment variables: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,13 +16,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-       console.error('SUPABASE_SERVICE_ROLE_KEY is missing');
-       return NextResponse.json(
-         { error: 'Database access is currently unavailable' },
-         { status: 503 }
-       );
-    }
+    const supabaseAdmin = getSupabaseAdmin();
 
     // Insert the post into the database
     const { data, error } = await supabaseAdmin
