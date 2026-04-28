@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-import { signInAction } from './actions'
+import { signInAction } from '@/lib/auth-actions'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')

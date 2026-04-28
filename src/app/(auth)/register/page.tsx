@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-import { signUpAction } from './actions'
+import { signUpAction } from '@/lib/auth-actions'
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('')
