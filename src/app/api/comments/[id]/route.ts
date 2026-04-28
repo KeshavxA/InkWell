@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
+export const dynamic = 'force-dynamic';
+
 async function getUserAccess() {
   const supabase = await createServerClient();
   const { data: { session } } = await supabase.auth.getSession();

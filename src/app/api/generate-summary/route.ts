@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+export const dynamic = 'force-dynamic';
+
 // Initialize the Gemini API client inside the request handler to ensure environment variables are loaded.
 
 export async function POST(req: NextRequest) {
