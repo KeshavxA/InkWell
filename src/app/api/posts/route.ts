@@ -35,6 +35,12 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Generate a slug from the title
+    const slug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '');
+
     const { data, error } = await supabaseAdmin
       .from('posts')
       .insert({
