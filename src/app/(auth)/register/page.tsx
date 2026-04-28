@@ -59,8 +59,9 @@ export default function RegisterPage() {
             router.refresh()
         }
       }
-    } catch (error: any) {
+    } catch (err: unknown) {
       toast.error('An unexpected error occurred')
+      console.error(err)
     } finally {
       setLoading(false)
     }

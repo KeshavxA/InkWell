@@ -32,8 +32,9 @@ export default function LoginPage() {
       toast.success('Welcome back!')
       router.push('/dashboard')
       router.refresh()
-    } catch (error: any) {
+    } catch (err: unknown) {
       toast.error('An unexpected error occurred')
+      console.error(err);
     } finally {
       setLoading(false)
     }
@@ -93,7 +94,7 @@ export default function LoginPage() {
       </form>
 
       <p className="text-center text-sm text-neutral-400">
-        Don't have an account?{' '}
+        Don&apos;t have an account?{' '}
         <Link href="/register" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
           Create one
         </Link>
