@@ -1,7 +1,6 @@
 'use server'
 
 import { createServerClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 
 export async function signUpAction(formData: { email: string; fullName: string; role: string; password: string }) {
   const supabase = await createServerClient()
