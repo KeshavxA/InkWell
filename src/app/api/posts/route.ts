@@ -19,17 +19,34 @@ export async function POST(req: NextRequest) {
     const supabaseAdmin = getSupabaseAdmin();
 
     // Insert the post into the database
+    // 1. Ensure profile exists (Safety check for author_id FK)
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .eq('id', author_id)
+      .single();
+
+    if (!profile) {
+      console.log('Profile missing for author, creating one...');
+      await supabaseAdmin.from('profiles').insert({
+        id: author_id,
+        username: email ? email.split('@')[0] : `user_${author_id.slice(0, 5)}`,
+        full_name: 'Author'
+      });
+    }
+
     const { data, error } = await supabaseAdmin
       .from('posts')
-      .insert([
-        {
-          title,
-          featured_image,
-          content,
-          summary,
-          author_id,
-        },
-      ])
+      .insert({
+        title,
+        slug,
+        excerpt: summary,
+        content,
+        cover_image: featured_image,
+        author_id,
+        status: 'published',
+        published_at: new Date().toISOString()
+      })
       .select()
       .single();
 

@@ -55,7 +55,7 @@ export default function CreatePostPage() {
         const errorData = await summaryRes.json();
         const errorMsg = errorData.error || 'AI Summary failed';
         console.warn('AI Summary generation failed:', errorMsg);
-        toast.error(`${errorMsg}. Saving post with fallback text.`);
+        toast.error(`${errorMsg}. Saving post with fallback text.`, { icon: '🤖' });
         summary = 'An AI summary could not be generated for this post.';
       } else {
         const summaryData = await summaryRes.json();
