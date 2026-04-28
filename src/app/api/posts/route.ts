@@ -45,13 +45,11 @@ export async function POST(req: NextRequest) {
       .from('posts')
       .insert({
         title,
-        slug,
-        excerpt: summary,
-        content,
-        cover_image: featured_image,
+        body: content,
+        image_url: featured_image,
+        summary: summary,
         author_id,
-        status: 'published',
-        published_at: new Date().toISOString()
+        created_at: new Date().toISOString()
       })
       .select()
       .single();
