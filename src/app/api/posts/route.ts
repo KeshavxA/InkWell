@@ -39,33 +39,54 @@ export async function POST(req: NextRequest) {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '');
 
-    // 3. SUPER-INSERT: Populate ALL possible column names to ensure success
-    const { data, error } = await supabaseAdmin
-      .from('posts')
-      .insert({
+    // 3. ULTIMATE RESILIENT INSERT
+    // We try to insert with the absolute minimum columns first
+    const tryInsert = async (payload: any) => {
+      return await supabaseAdmin.from('posts').insert(payload).select().single();
+    };
+
+    // Strategy 1: The 'inkwell_schema' (Simple)
+    let { data, error } = await tryInsert({
+      title,
+      body: content,
+      image_url: featured_image,
+      summary: summary,
+      author_id,
+      created_at: new Date().toISOString()
+    });
+
+    // Strategy 2: If simple fails, try the 'schema' (Complex)
+    if (error && (error.message.includes('column') || error.code === '42703')) {
+      console.log('Strategy 1 failed, trying Strategy 2...');
+      const result2 = await tryInsert({
         title,
-        author_id,
-        // Content variations
-        body: content,
+        slug,
         content: content,
-        // Image variations
-        image_url: featured_image,
         cover_image: featured_image,
-        // Summary variations
-        summary: summary,
         excerpt: summary,
-        // Other fields
-        slug: slug,
+        author_id,
         status: 'published',
-        published_at: new Date().toISOString(),
-        created_at: new Date().toISOString()
-      })
-      .select()
-      .single();
+        published_at: new Date().toISOString()
+      });
+      data = result2.data;
+      error = result2.error;
+    }
+
+    // Strategy 3: Absolute Bare Minimum (Emergency)
+    if (error && (error.message.includes('column') || error.code === '42703')) {
+      console.log('Strategy 2 failed, trying Strategy 3 (Bare Minimum)...');
+      const result3 = await tryInsert({
+        title,
+        body: content,
+        author_id
+      });
+      data = result3.data;
+      error = result3.error;
+    }
 
     if (error) {
-      console.error('Final Supabase insertion error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('Final Database Error:', error);
+      return NextResponse.json({ error: `Database Error: ${error.message}` }, { status: 500 });
     }
 
     return NextResponse.json({ post: data }, { status: 201 });

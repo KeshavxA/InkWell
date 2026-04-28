@@ -110,35 +110,35 @@ export default function CreatePostPage() {
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
+      {/* AI Toggle Section - Moved to Top for Visibility */}
+      <div className="mb-6 bg-indigo-600/10 dark:bg-indigo-900/40 p-5 rounded-3xl border-2 border-indigo-500/30 shadow-lg shadow-indigo-500/5 animate-pulse-subtle">
+        <label className="flex items-center cursor-pointer group">
+          <div className="relative">
+            <input 
+              type="checkbox" 
+              className="sr-only" 
+              checked={useAI}
+              onChange={() => setUseAI(!useAI)}
+            />
+            <div className={`block w-14 h-8 rounded-full transition-colors ${useAI ? 'bg-indigo-600' : 'bg-slate-400 dark:bg-slate-700'}`}></div>
+            <div className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform shadow-md ${useAI ? 'transform translate-x-6' : ''}`}></div>
+          </div>
+          <div className="ml-4">
+            <div className="text-base font-black text-indigo-700 dark:text-indigo-300">
+              {useAI ? 'AI Summary is ENABLED' : 'AI Summary is DISABLED'}
+            </div>
+            <div className="text-xs font-medium text-indigo-600/80 dark:text-indigo-400/80">
+              {useAI ? 'Gemini will generate a summary. Turn this OFF if it fails.' : 'Using title as summary. (Safe Mode)'}
+            </div>
+          </div>
+        </label>
+      </div>
+
       <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-8 tracking-tight">Create New Post</h1>
       
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-8 transition-colors">
           
-          {/* AI Toggle Section */}
-          <div className="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-500/20">
-            <label className="flex items-center cursor-pointer group">
-              <div className="relative">
-                <input 
-                  type="checkbox" 
-                  className="sr-only" 
-                  checked={useAI}
-                  onChange={() => setUseAI(!useAI)}
-                />
-                <div className={`block w-12 h-7 rounded-full transition-colors ${useAI ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'}`}></div>
-                <div className={`absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform ${useAI ? 'transform translate-x-5' : ''}`}></div>
-              </div>
-              <div className="ml-4">
-                <div className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                  Generate Summary with Gemini AI
-                </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">
-                  Automatically create a professional 200-word summary for your post.
-                </div>
-              </div>
-            </label>
-          </div>
-
           <div className="space-y-2.5">
             <label htmlFor="title" className="block text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">
               Post Title
