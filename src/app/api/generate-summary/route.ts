@@ -10,73 +10,56 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { title, body: contentBody } = body;
 
-    console.log('[AI Summary] Request received for title:', title);
-
     if (!title || !contentBody) {
-      return NextResponse.json(
-        { error: 'Title and body are required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Title and body are required' }, { status: 400 });
     }
 
-    // Use environment variable for security
     const apiKey = process.env.GEMINI_API_KEY;
-
     if (!apiKey) {
-      console.error('[AI Summary] CRITICAL: GEMINI_API_KEY is missing');
-      return NextResponse.json(
-        { error: 'AI summary generation is currently unavailable (Missing API Key)' },
-        { status: 503 }
-      );
+      return NextResponse.json({ error: 'Missing API Key' }, { status: 503 });
     }
 
-    // Initialize the Gemini API client. We specify version 'v1' to avoid 404 errors with newer models.
-    const genAI = new GoogleGenerativeAI(apiKey); // SDK handles default v1 usually, but let's be safe.
-    // However, the error said v1beta was being used. To force v1, we ensure the model name is correct.
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' }, { apiVersion: 'v1' });
-
-    // Strip HTML tags from contentBody to send clean text to Gemini
+    // Strip HTML tags
     const cleanContent = contentBody.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
-
-    console.log('[AI Summary] Cleaned content length:', cleanContent.length);
 
     const prompt = `You are a professional blog post summarizer. 
 Read the following blog post titled "${title}" and generate an engaging summary of approximately 200 words.
-Focus on the key takeaways and why someone should read the full post. 
-If the content is very short, expand on the theme mentioned to reach the desired length.
-Return ONLY the summary text.
+POST CONTENT: ${cleanContent}`;
 
-POST CONTENT:
-${cleanContent}`;
+    console.log('[AI Summary] Calling Google API Direct...');
+    
+    // DIRECT FETCH TO GOOGLE
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      }
+    );
 
-    console.log('[AI Summary] Calling Gemini API...');
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const summary = response.text();
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('[AI Summary] Google API Error:', data);
+      throw new Error(data.error?.message || 'Google API Error');
+    }
+
+    const summary = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!summary) {
       throw new Error('Gemini returned an empty response');
     }
 
-    console.log('[AI Summary] Successfully generated summary');
-
     return NextResponse.json({ summary });
   } catch (error: any) {
     console.error('[AI Summary] Full Error:', error);
-
-    let userErrorMessage = 'AI Service Error';
-    if (error.message?.includes('API key not valid')) {
-      userErrorMessage = 'Invalid AI API Key';
-    } else if (error.message?.includes('safety')) {
-      userErrorMessage = 'Content flagged by AI safety filters';
-    } else if (error.message?.includes('fetch failed')) {
-      userErrorMessage = 'Could not connect to AI service (Network error)';
-    }
-
     return NextResponse.json(
       { 
-        error: `AI Error: ${userErrorMessage}. Please check your Vercel GEMINI_API_KEY.`,
-        details: error.message || 'No additional details'
+        error: `AI Error: ${error.message}`,
+        details: error.message 
       },
       { status: 500 }
     );
