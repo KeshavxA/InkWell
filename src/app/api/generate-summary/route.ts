@@ -28,9 +28,9 @@ POST CONTENT: ${cleanContent}`;
 
     console.log('[AI Summary] Calling Google API Direct...');
     
-    // DIRECT FETCH TO GOOGLE
+    // DIRECT FETCH TO GOOGLE - Using v1 stable and gemini-pro
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
