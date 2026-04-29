@@ -27,11 +27,10 @@ Read the following blog post titled "${title}" and generate an engaging summary 
 POST CONTENT: ${cleanContent}`;
 
     const modelsToTry = [
+      { version: 'v1beta', name: 'gemini-2.0-flash' },
+      { version: 'v1beta', name: 'gemini-2.0-flash-lite' },
       { version: 'v1beta', name: 'gemini-1.5-flash' },
-      { version: 'v1beta', name: 'gemini-1.5-flash-8b' },
-      { version: 'v1', name: 'gemini-pro' },
-      { version: 'v1beta', name: 'gemini-pro' },
-      { version: 'v1', name: 'gemini-1.5-flash' }
+      { version: 'v1', name: 'gemini-pro' }
     ];
 
     let summary = '';
