@@ -30,10 +30,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Initialize inside handler to ensure fresh env vars
-    const genAI = new GoogleGenerativeAI(apiKey);
-    // Use gemini-pro for maximum compatibility and to avoid 404 errors with newer models
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    // Initialize the Gemini API client. We specify version 'v1' to avoid 404 errors with newer models.
+    const genAI = new GoogleGenerativeAI(apiKey); // SDK handles default v1 usually, but let's be safe.
+    // However, the error said v1beta was being used. To force v1, we ensure the model name is correct.
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' }, { apiVersion: 'v1' });
 
     // Strip HTML tags from contentBody to send clean text to Gemini
     const cleanContent = contentBody.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
