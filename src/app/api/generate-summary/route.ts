@@ -26,31 +26,47 @@ export async function POST(req: NextRequest) {
 Read the following blog post titled "${title}" and generate an engaging summary of approximately 200 words.
 POST CONTENT: ${cleanContent}`;
 
-    console.log('[AI Summary] Calling Google API Direct...');
-    
-    // DIRECT FETCH TO GOOGLE - Using v1 stable and gemini-pro
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
+    const modelsToTry = [
+      { version: 'v1beta', name: 'gemini-1.5-flash' },
+      { version: 'v1', name: 'gemini-pro' },
+      { version: 'v1beta', name: 'gemini-pro' },
+      { version: 'v1', name: 'gemini-1.5-flash' }
+    ];
+
+    let summary = '';
+    let lastError = '';
+
+    for (const modelInfo of modelsToTry) {
+      try {
+        console.log(`[AI Summary] Trying ${modelInfo.name} on ${modelInfo.version}...`);
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/${modelInfo.version}/models/${modelInfo.name}:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }]
+            })
+          }
+        );
+
+        const data = await response.json();
+        if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
+          summary = data.candidates[0].content.parts[0].text;
+          console.log(`[AI Summary] Success with ${modelInfo.name}!`);
+          break;
+        } else {
+          lastError = data.error?.message || 'Unknown API Error';
+          console.warn(`[AI Summary] ${modelInfo.name} failed: ${lastError}`);
+        }
+      } catch (err: any) {
+        lastError = err.message;
+        console.error(`[AI Summary] ${modelInfo.name} connection failed: ${lastError}`);
       }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error('[AI Summary] Google API Error:', data);
-      throw new Error(data.error?.message || 'Google API Error');
     }
 
-    const summary = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
     if (!summary) {
-      throw new Error('Gemini returned an empty response');
+      throw new Error(`All models failed. Last error: ${lastError}`);
     }
 
     return NextResponse.json({ summary });
