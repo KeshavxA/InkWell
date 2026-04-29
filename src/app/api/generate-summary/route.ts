@@ -73,7 +73,10 @@ ${cleanContent}`;
     }
 
     return NextResponse.json(
-      { error: `AI Error: ${userErrorMessage}. Please check your Vercel GEMINI_API_KEY.` },
+      { 
+        error: `AI Error: ${userErrorMessage}. Please check your Vercel GEMINI_API_KEY.`,
+        details: error.message || 'No additional details'
+      },
       { status: 500 }
     );
   }
