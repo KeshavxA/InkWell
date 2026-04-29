@@ -46,8 +46,12 @@ export default function CreatePostPage() {
             const summaryData = await summaryRes.json();
             summary = summaryData.summary;
           } else {
-            console.warn('AI Summary failed, using fallback.');
-            toast.error('AI Summary failed. Using title as summary.', { icon: '⚠️' });
+            const errorData = await summaryRes.json();
+            console.warn('AI Summary failed:', errorData);
+            toast.error(`AI Failed: ${errorData.details || 'Check your Vercel Key'}`, { 
+              icon: '🤖',
+              duration: 5000 
+            });
           }
         } catch (aiErr) {
           console.error('AI Connection failed:', aiErr);
