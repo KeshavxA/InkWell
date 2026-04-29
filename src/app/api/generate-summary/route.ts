@@ -26,21 +26,31 @@ export async function POST(req: NextRequest) {
 Read the following blog post titled "${title}" and generate an engaging summary of approximately 200 words.
 POST CONTENT: ${cleanContent}`;
 
-    const modelsToTry = [
-      { version: 'v1beta', name: 'gemini-2.0-flash' },
-      { version: 'v1beta', name: 'gemini-2.0-flash-lite' },
-      { version: 'v1beta', name: 'gemini-1.5-flash' },
-      { version: 'v1', name: 'gemini-pro' }
-    ];
+    // 1. AUTO-DISCOVERY: Find what models this key can actually use
+    console.log('[AI Summary] Auto-discovering available models...');
+    const listRes = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`);
+    const listData = await listRes.json();
+    
+    if (!listData.models || listData.models.length === 0) {
+      throw new Error('Your API Key has no models available. Please enable "Generative Language API" in Google Cloud.');
+    }
+
+    const availableModels = listData.models
+      .filter((m: any) => m.supportedGenerationMethods.includes('generateContent'))
+      .map((m: any) => m.name);
+
+    console.log(`[AI Summary] Found ${availableModels.length} compatible models.`);
 
     let summary = '';
     let lastError = '';
 
-    for (const modelInfo of modelsToTry) {
+    // 2. TRY EVERY DISCOVERED MODEL
+    for (const modelPath of availableModels) {
       try {
-        console.log(`[AI Summary] Trying ${modelInfo.name} on ${modelInfo.version}...`);
+        console.log(`[AI Summary] Trying ${modelPath}...`);
+        // Use v1beta for widest compatibility
         const response = await fetch(
-          `https://generativelanguage.googleapis.com/${modelInfo.version}/models/${modelInfo.name}:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/${modelPath}:generateContent?key=${apiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -53,26 +63,20 @@ POST CONTENT: ${cleanContent}`;
         const data = await response.json();
         if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
           summary = data.candidates[0].content.parts[0].text;
-          console.log(`[AI Summary] Success with ${modelInfo.name}!`);
+          console.log(`[AI Summary] Success with ${modelPath}!`);
           break;
         } else {
           lastError = data.error?.message || 'Unknown API Error';
-          console.warn(`[AI Summary] ${modelInfo.name} failed: ${lastError}`);
+          console.warn(`[AI Summary] ${modelPath} failed: ${lastError}`);
         }
       } catch (err: any) {
         lastError = err.message;
-        console.error(`[AI Summary] ${modelInfo.name} connection failed: ${lastError}`);
+        console.error(`[AI Summary] ${modelPath} connection failed: ${lastError}`);
       }
     }
 
     if (!summary) {
-      // DIAGNOSTIC: Try to list models to see what is actually available
-      console.log('[AI Summary] Diagnostic: Listing available models...');
-      const listRes = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`);
-      const listData = await listRes.json();
-      const availableModels = listData.models?.map((m: any) => m.name.replace('models/', '')).join(', ') || 'NONE';
-      
-      throw new Error(`All models failed. Available for your key: [${availableModels}]. Please enable "Generative Language API" in Google Cloud Console.`);
+      throw new Error(`All discovered models failed. Last error: ${lastError}`);
     }
 
     return NextResponse.json({ summary });
