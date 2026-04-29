@@ -19,9 +19,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Use environment variable first, then fallback to hardcoded key for immediate submission safety
-    const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyDAF1teady0gN_1si_2iDHyK5fqpQV8Xs0';
-    
+    // Use environment variable for security
+    const apiKey = process.env.GEMINI_API_KEY;
+
     if (!apiKey) {
       console.error('[AI Summary] CRITICAL: GEMINI_API_KEY is missing');
       return NextResponse.json(
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 
     // Strip HTML tags from contentBody to send clean text to Gemini
     const cleanContent = contentBody.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
-    
+
     console.log('[AI Summary] Cleaned content length:', cleanContent.length);
 
     const prompt = `You are a professional blog post summarizer. 
@@ -62,7 +62,7 @@ ${cleanContent}`;
     return NextResponse.json({ summary });
   } catch (error: any) {
     console.error('[AI Summary] Full Error:', error);
-    
+
     let userErrorMessage = 'AI Service Error';
     if (error.message?.includes('API key not valid')) {
       userErrorMessage = 'Invalid AI API Key';
