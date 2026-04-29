@@ -159,20 +159,20 @@ export default function MyPostsPage() {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
+            <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+              <table className="min-w-[800px] w-full divide-y divide-slate-100 dark:divide-slate-800">
                 <thead className="bg-slate-50 dark:bg-slate-900/50">
                   <tr>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-1/4">
                       Title
                     </th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden md:table-cell">
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden lg:table-cell w-2/5">
                       Summary
                     </th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-32">
                       Date
                     </th>
-                    <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-32">
                       Actions
                     </th>
                   </tr>
@@ -180,31 +180,33 @@ export default function MyPostsPage() {
                 <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-50 dark:divide-slate-800">
                   {posts.map((post) => (
                     <tr key={post.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-xs">{post.title}</div>
+                      <td className="px-6 py-5">
+                        <div className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1" title={post.title}>
+                          {post.title}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 hidden md:table-cell">
-                        <div className="text-sm text-slate-500 dark:text-slate-400 truncate max-w-xs lg:max-w-md">
+                      <td className="px-6 py-5 hidden lg:table-cell">
+                        <div className="text-sm text-slate-500 dark:text-slate-400 line-clamp-1 max-w-xs xl:max-w-md">
                           {post.summary || 'No summary available.'}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-5 whitespace-nowrap">
                         <div className="text-sm text-slate-500 dark:text-slate-400">
                           {format(new Date(post.created_at), 'MMM d, yyyy')}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td className="px-6 py-5 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end space-x-3">
-                          <Link href={`/blog/${post.id}`} className="text-gray-400 hover:text-indigo-600 transition-colors" title="View">
+                          <Link href={`/blog/${post.id}`} className="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-all" title="View">
                             <Eye className="w-5 h-5" />
                           </Link>
-                          <Link href={`/dashboard/posts/${post.id}/edit`} className="text-gray-400 hover:text-emerald-600 transition-colors" title="Edit">
+                          <Link href={`/dashboard/posts/${post.id}/edit`} className="p-2 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-all" title="Edit">
                             <Edit className="w-5 h-5" />
                           </Link>
                           <button
                             onClick={() => handleDelete(post.id, post.title)}
                             disabled={isDeleting === post.id}
-                            className="text-gray-400 hover:text-red-600 transition-colors focus:outline-none disabled:opacity-50"
+                            className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-all focus:outline-none disabled:opacity-50"
                             title="Delete"
                           >
                             {isDeleting === post.id ? (
