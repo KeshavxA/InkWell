@@ -32,7 +32,8 @@ export async function POST(req: NextRequest) {
 
     // Initialize inside handler to ensure fresh env vars
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // Use gemini-pro for maximum compatibility and to avoid 404 errors with newer models
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
     // Strip HTML tags from contentBody to send clean text to Gemini
     const cleanContent = contentBody.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
