@@ -28,6 +28,7 @@ POST CONTENT: ${cleanContent}`;
 
     const modelsToTry = [
       { version: 'v1beta', name: 'gemini-1.5-flash' },
+      { version: 'v1beta', name: 'gemini-1.5-flash-8b' },
       { version: 'v1', name: 'gemini-pro' },
       { version: 'v1beta', name: 'gemini-pro' },
       { version: 'v1', name: 'gemini-1.5-flash' }
@@ -66,7 +67,13 @@ POST CONTENT: ${cleanContent}`;
     }
 
     if (!summary) {
-      throw new Error(`All models failed. Last error: ${lastError}`);
+      // DIAGNOSTIC: Try to list models to see what is actually available
+      console.log('[AI Summary] Diagnostic: Listing available models...');
+      const listRes = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`);
+      const listData = await listRes.json();
+      const availableModels = listData.models?.map((m: any) => m.name.replace('models/', '')).join(', ') || 'NONE';
+      
+      throw new Error(`All models failed. Available for your key: [${availableModels}]. Please enable "Generative Language API" in Google Cloud Console.`);
     }
 
     return NextResponse.json({ summary });
