@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -17,8 +18,11 @@ import {
   Link as LinkIcon,
   Image as ImageIcon,
   Heading1,
-  Heading2
+  Heading2,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface TiptapEditorProps {
   content: string;
@@ -31,13 +35,15 @@ const MenuButton = ({
   isActive = false, 
   disabled = false, 
   children,
-  title 
+  title,
+  className = ""
 }: { 
   onClick: () => void; 
   isActive?: boolean; 
   disabled?: boolean; 
   children: React.ReactNode;
   title: string;
+  className?: string;
 }) => (
   <button
     type="button"
@@ -48,13 +54,15 @@ const MenuButton = ({
       isActive 
         ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400' 
         : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
-    } disabled:opacity-30 disabled:cursor-not-allowed`}
+    } disabled:opacity-30 disabled:cursor-not-allowed ${className}`}
   >
     {children}
   </button>
 );
 
 export default function TiptapEditor({ content, onChange, placeholder = 'Write your story here...' }: TiptapEditorProps) {
+  const [isAIWriting, setIsAIWriting] = useState(false);
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -80,7 +88,7 @@ export default function TiptapEditor({ content, onChange, placeholder = 'Write y
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-indigo max-w-none focus:outline-none min-h-[300px] p-4',
+        class: 'prose prose-indigo dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4',
       },
     },
   });
@@ -107,6 +115,42 @@ export default function TiptapEditor({ content, onChange, placeholder = 'Write y
     }
     
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  };
+
+  const handleAIWrite = async () => {
+    const currentText = editor.getText();
+    if (!currentText || currentText.length < 10) {
+      toast.error('Write a little more so AI can understand the context');
+      return;
+    }
+
+    setIsAIWriting(true);
+    const promise = fetch('/api/ai/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        prompt: `Continue writing this blog post. Keep the tone consistent and provide a natural continuation of about 100 words. DO NOT repeat what is already written.\n\nCONTENT:\n${currentText}`, 
+        mode: 'outline' 
+      }),
+    });
+
+    toast.promise(promise, {
+      loading: 'Gemini is thinking...',
+      success: 'Content generated!',
+      error: 'Failed to generate content'
+    });
+
+    try {
+      const res = await promise;
+      const data = await res.json();
+      if (data.result) {
+        editor.chain().focus().insertContent('\n\n' + data.result).run();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsAIWriting(false);
+    }
   };
 
   return (
@@ -185,6 +229,20 @@ export default function TiptapEditor({ content, onChange, placeholder = 'Write y
           <ImageIcon size={18} />
         </MenuButton>
         
+        <div className="w-px h-6 bg-slate-300 dark:bg-slate-700 mx-1" />
+
+        {/* AI Assistant Button */}
+        <button
+          type="button"
+          onClick={handleAIWrite}
+          disabled={isAIWriting}
+          title="AI Write (Continue writing)"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black shadow-sm transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50"
+        >
+          {isAIWriting ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+          AI Assist
+        </button>
+
         <div className="flex-grow" />
         
         <MenuButton
@@ -209,8 +267,13 @@ export default function TiptapEditor({ content, onChange, placeholder = 'Write y
       {/* Footer / Status */}
       <div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800 text-[10px] text-slate-400 dark:text-slate-500 flex justify-between">
         <span>Press Ctrl+B for Bold, Ctrl+I for Italic</span>
-        <span>{editor.storage.characterCount?.characters?.() || 0} characters</span>
+        <div className="flex gap-4">
+           <span>{editor.getText().split(/\s+/).filter(Boolean).length} words</span>
+           <span>{editor.storage.characterCount?.characters?.() || 0} characters</span>
+        </div>
       </div>
     </div>
+  );
+}
   );
 }
