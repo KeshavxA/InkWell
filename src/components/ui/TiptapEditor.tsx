@@ -275,5 +275,3 @@ export default function TiptapEditor({ content, onChange, placeholder = 'Write y
     </div>
   );
 }
-  );
-}
